@@ -22,7 +22,7 @@
  *  limitations under the License.
  */
 MathJax.Extension.annotations = {
-  version: '0.9'
+  version: '1.0'
 };
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
@@ -32,7 +32,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
   TEXDEF = TEX.Definitions;
   TEXDEF.Add({
     macros: {
-      Annotate: 'Annotate'
+      Annotate: 'Annotate',
+      annotate: 'annotate'
     }
   }, null, true);
   return TEX.Parse.Augment({
@@ -83,6 +84,25 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
         });
       }
       return macro.annotations[type] = annotation;
+    },
+    annotate: function(name){
+      var types, expr, annotations, i$, len$, type, math, mml, annotation;
+      types = this.GetBrackets(name, '').split(',');
+      expr = this.GetArgument(name);
+      annotations = {};
+      for (i$ = 0, len$ = types.length; i$ < len$; ++i$) {
+        type = types[i$];
+        annotations[type] = this.GetArgument(name);
+      }
+      math = TEX.Parse(expr, this.stack.env).mml();
+      mml = MML.semantics(math);
+      for (type in annotations) {
+        annotation = annotations[type];
+        mml.Append(MML.annotation(annotation).With({
+          name: type
+        }));
+      }
+      return this.Push(this.mmlToken(mml));
     }
   });
 });

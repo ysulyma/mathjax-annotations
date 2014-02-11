@@ -21,7 +21,7 @@
  *  limitations under the License.
  */
 
-MathJax.Extension.annotations = {version: \0.9}
+MathJax.Extension.annotations = {version: \1.0}
 
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
@@ -33,6 +33,7 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
   TEXDEF.Add do
     macros:
       Annotate: \Annotate
+      annotate: \annotate
     null
     true
 
@@ -81,12 +82,31 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
           for let type of macro.annotations
             # expand
             annotation = @SubstituteArgs params, macro.annotations[type]
-            mml.Append <| MML.annotation annotation .With {name: type}
+            mml.Append <| MML.annotation annotation .With name: type
           
           @Push @mml-token mml
       
       macro.annotations[type] = annotation
-
+      
+    #
+    # Provide the \annotate command
+    #
+    annotate: (name) ->
+      # parse the args
+      types = @GetBrackets name, '' .split ','
+      expr = @GetArgument name
+      annotations = {}
+      for type in types
+        annotations[type] = @GetArgument name
+        
+      # render the math
+      math = TEX.Parse expr, @stack.env .mml!
+      mml = MML.semantics math
+      
+      for type, annotation of annotations
+        mml.Append <| MML.annotation annotation .With name: type
+      
+      @Push @mml-token mml
 
 /* output jaxes */
 MathJax.Hub.Register.StartupHook "HTML-CSS Jax Ready" ->
