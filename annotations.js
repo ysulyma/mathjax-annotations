@@ -22,7 +22,7 @@
  *  limitations under the License.
  */
 MathJax.Extension.annotations = {
-  version: '1.0'
+  version: '1.1'
 };
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
@@ -76,6 +76,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
           function fn$(type){
             var annotation;
             annotation = this.SubstituteArgs(params, macro.annotations[type]);
+            annotation = annotation.replace(/\\#/g, '#');
             mml.Append(MML.annotation(annotation).With({
               name: type
             }));

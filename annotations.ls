@@ -21,7 +21,7 @@
  *  limitations under the License.
  */
 
-MathJax.Extension.annotations = {version: \1.0}
+MathJax.Extension.annotations = version: \1.1
 
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
@@ -80,6 +80,7 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
           for let type of macro.annotations
             # expand
             annotation = @SubstituteArgs params, macro.annotations[type]
+            annotation.= replace /\\#/g \#
             mml.Append <| MML.annotation annotation .With name: type
           
           @Push @mml-token mml
