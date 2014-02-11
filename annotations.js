@@ -22,16 +22,19 @@
  *  limitations under the License.
  */
 MathJax.Extension.annotations = {
-  version: '0.8'
+  version: '0.9'
 };
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
-  var MML, TEX, TEXDEF, annotations;
+  var MML, TEX, TEXDEF;
   MML = MathJax.ElementJax.mml;
   TEX = MathJax.InputJax.TeX;
   TEXDEF = TEX.Definitions;
-  annotations = TEX.Definitions.annotations = {};
-  TEX.Definitions.macros.Annotate = 'Annotate';
+  TEXDEF.Add({
+    macros: {
+      Annotate: 'Annotate'
+    }
+  }, null, true);
   return TEX.Parse.Augment({
     ExpandMacro: function(name, macro, argcount, def){
       var args, optional, i$, i;
@@ -54,32 +57,32 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
       type = this.GetBrackets(name, '');
       cmd = this.GetArgument(name).match(/^\\(.+)$/)[1];
       annotation = this.GetArgument(name);
-      if (!annotations.hasOwnProperty(cmd)) {
-        annotations[cmd] = {};
-        macro = TEX.Definitions.macros[cmd];
-        if (macro == null) {
-          return;
-        }
+      macro = this.csFindMacro(cmd);
+      if (macro == null) {
+        return;
+      }
+      if (!macro.annotations) {
+        macro.annotations = {};
         args = ['\\' + cmd].concat(macro.slice(1));
-        TEX.Definitions.macros[cmd] = function(name){
+        this.setDef(cmd, function(name){
           var ref$, str, params, math, mml, i$;
           ref$ = TEX.Parse('', {}).ExpandMacro.apply(this, args), str = ref$[0], params = ref$[1];
           math = TEX.Parse(str, this.stack.env).mml();
           mml = MML.semantics(math);
-          for (i$ in annotations[cmd]) {
+          for (i$ in macro.annotations) {
             (fn$.call(this, i$));
           }
           return this.Push(this.mmlToken(mml));
           function fn$(type){
             var annotation;
-            annotation = this.SubstituteArgs(params, annotations[cmd][type]);
+            annotation = this.SubstituteArgs(params, macro.annotations[type]);
             mml.Append(MML.annotation(annotation).With({
               name: type
             }));
           }
-        };
+        });
       }
-      return annotations[cmd][type] = annotation;
+      return macro.annotations[type] = annotation;
     }
   });
 });

@@ -21,7 +21,7 @@
  *  limitations under the License.
  */
 
-MathJax.Extension.annotations = {version: \0.8}
+MathJax.Extension.annotations = {version: \0.9}
 
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
@@ -29,10 +29,12 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
   TEX = MathJax.InputJax.TeX
   TEXDEF = TEX.Definitions
   
-  # probably should scope this better...
-  annotations = TEX.Definitions.annotations = {}
-
-  TEX.Definitions.macros.Annotate = \Annotate
+  # register the \Annotate command
+  TEXDEF.Add do
+    macros:
+      Annotate: \Annotate
+    null
+    true
 
   TEX.Parse.Augment do
     # expand macros without screwing up the string
@@ -57,17 +59,17 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
       type = @GetBrackets name, ''
       cmd = @GetArgument name .match /^\\(.+)$/ .1
       annotation = @GetArgument name
-
+      
+      macro = @cs-find-macro cmd
+      return unless macro?
+      
+      if !macro.annotations
       # redefine the command to include the annotations
-      if !annotations.has-own-property cmd
-        annotations[cmd] = {}
+        macro.annotations = {}
         
-        macro = TEX.Definitions.macros[cmd]
-        return unless macro?
         args = ['\\' + cmd] ++ macro.slice 1
 
-        TEX.Definitions.macros[cmd] = (name) ->
-        
+        @set-def cmd, (name) ->
           # get the original definition
           [str, params] = TEX.Parse '',{} .ExpandMacro.apply @, args
         
@@ -76,14 +78,14 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
           mml = MML.semantics math
           
           # now, add the annotations...
-          for let type of annotations[cmd]
+          for let type of macro.annotations
             # expand
-            annotation = @SubstituteArgs params, annotations[cmd][type]
+            annotation = @SubstituteArgs params, macro.annotations[type]
             mml.Append <| MML.annotation annotation .With {name: type}
           
-          @Push @mmlToken mml
+          @Push @mml-token mml
       
-      annotations[cmd][type] = annotation
+      macro.annotations[type] = annotation
 
 
 /* output jaxes */
