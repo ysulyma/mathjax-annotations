@@ -66,8 +66,6 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
       
       if !macro.annotations
       # redefine the command to include the annotations
-        macro.annotations = {}
-        
         args = ['\\' + cmd] ++ macro.slice 1
 
         @set-def cmd, (name) ->
@@ -85,6 +83,8 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
             mml.Append <| MML.annotation annotation .With name: type
           
           @Push @mml-token mml
+        macro = @cs-find-macro cmd
+        macro.annotations = {}
       
       macro.annotations[type] = annotation
       

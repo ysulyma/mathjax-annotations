@@ -63,7 +63,6 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
         return;
       }
       if (!macro.annotations) {
-        macro.annotations = {};
         args = ['\\' + cmd].concat(macro.slice(1));
         this.setDef(cmd, function(name){
           var ref$, str, params, math, mml, i$;
@@ -82,6 +81,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
             }));
           }
         });
+        macro = this.csFindMacro(cmd);
+        macro.annotations = {};
       }
       return macro.annotations[type] = annotation;
     },
