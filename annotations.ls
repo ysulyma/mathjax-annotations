@@ -21,7 +21,7 @@
  *  limitations under the License.
  */
 
-MathJax.Extension.annotations = version: \1.1
+MathJax.Extension.annotations = version: \1.2
 
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
@@ -98,7 +98,7 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
       expr = @GetArgument name
       annotations = {}
       for type in types
-        annotations[type] = @GetArgument name
+        annotations[type] = @GetArgument name .replace /\\#/g \#
         
       # render the math
       math = TEX.Parse expr, @stack.env .mml!

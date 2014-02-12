@@ -22,7 +22,7 @@
  *  limitations under the License.
  */
 MathJax.Extension.annotations = {
-  version: '1.1'
+  version: '1.2'
 };
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
@@ -94,7 +94,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
       annotations = {};
       for (i$ = 0, len$ = types.length; i$ < len$; ++i$) {
         type = types[i$];
-        annotations[type] = this.GetArgument(name);
+        annotations[type] = this.GetArgument(name).replace(/\\#/g, '#');
       }
       math = TEX.Parse(expr, this.stack.env).mml();
       mml = MML.semantics(math);
