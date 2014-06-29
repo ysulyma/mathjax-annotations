@@ -21,7 +21,7 @@
  *  limitations under the License.
  */
 
-MathJax.Extension.annotations = version: \1.2
+MathJax.Extension.annotations = version: \1.3
 
 /* \Annotations command */
 MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
@@ -77,13 +77,15 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
           mml = MML.semantics math
           
           # now, add the annotations...
-          for let type of macro.annotations
+          for type of macro.annotations
             # expand
             annotation = @SubstituteArgs params, macro.annotations[type]
             annotation.= replace /\\#/g \#
-            mml.Append <| MML.annotation annotation .With name: type
+            
+            $annotation = MML.annotation annotation .With {name: type, +is-token}
+            mml.Append $annotation
           
-          @Push @mml-token mml
+          @Push mml
         macro = @cs-find-macro cmd
         macro.annotations = {}
       
@@ -105,9 +107,11 @@ MathJax.Hub.Register.StartupHook "TeX Jax Ready" ->
       mml = MML.semantics math
       
       for type, annotation of annotations
-        mml.Append <| MML.annotation annotation .With name: type
+        $annotation = MML.annotation annotation .With {name: type, +is-token}
+        
+        mml.Append $annotation
       
-      @Push @mml-token mml
+      @Push mml
 
 /* output jaxes */
 MathJax.Hub.Register.StartupHook "HTML-CSS Jax Ready" ->
@@ -116,13 +120,13 @@ MathJax.Hub.Register.StartupHook "HTML-CSS Jax Ready" ->
   MML_semantics_toHTML = MML.semantics::toHTML
   
   MML.semantics.Augment do
-    toHTML: (span,HW,D) ->
-      span = MML_semantics_toHTML.call(this,span,HW,D);
+    toHTML: (span, HW, D) ->
+      span = MML_semantics_toHTML.call @, span, HW, D
       
       # add the annotations
       for i from 1 til @data.length
         if (d = @data[i]) != null && d.type == \annotation
-          attr = \data-annotation + if d['name'] then "_#{d['name']}" else ''
+          attr = \data-annotation + if d.name then "_#{d.name}" else ''
           span.set-attribute attr, d.data[0]
         
       span
@@ -141,7 +145,7 @@ MathJax.Hub.Register.StartupHook "SVG Jax Ready" ->
       # add the annotations
       for i from 1 til @data.length
         if (d = @data[i]) != null && d.type == \annotation
-          attr = \data-annotation + if d['name'] then "_#{d['name']}" else ''
+          attr = \data-annotation + if d.name then "_#{d.name}" else ''
           svg.element.set-attribute attr, d.data[0]
 
         
@@ -151,11 +155,11 @@ MathJax.Hub.Register.StartupHook "SVG Jax Ready" ->
         \rect
         {
           width: svg.w
-          height: svg.h+svg.d
+          height: svg.h + svg.d
           y:-svg.d
           fill: \none
           stroke: \none
-          "pointer-events": \all
+          'pointer-events': \all
         }
                                  
       @SVGsaveData svg

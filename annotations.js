@@ -21,142 +21,144 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-MathJax.Extension.annotations = {
-  version: '1.2'
-};
-/* \Annotations command */
-MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
-  var MML, TEX, TEXDEF;
-  MML = MathJax.ElementJax.mml;
-  TEX = MathJax.InputJax.TeX;
-  TEXDEF = TEX.Definitions;
-  TEXDEF.Add({
-    macros: {
-      Annotate: 'Annotate',
-      annotate: 'annotate'
-    }
-  }, null, true);
-  return TEX.Parse.Augment({
-    ExpandMacro: function(name, macro, argcount, def){
-      var args, optional, i$, i;
-      if (argcount) {
-        args = [];
-        if (def != null) {
-          optional = this.GetBrackets(name);
-          args.push(optional != null ? optional : def);
-        }
-        for (i$ = args.length; i$ < argcount; ++i$) {
-          i = i$;
-          args.push(this.GetArgument(name));
-        }
-        macro = this.SubstituteArgs(args, macro);
+(function(){
+  MathJax.Extension.annotations = {
+    version: '1.3'
+  };
+  /* \Annotations command */
+  MathJax.Hub.Register.StartupHook("TeX Jax Ready", function(){
+    var MML, TEX, TEXDEF;
+    MML = MathJax.ElementJax.mml;
+    TEX = MathJax.InputJax.TeX;
+    TEXDEF = TEX.Definitions;
+    TEXDEF.Add({
+      macros: {
+        Annotate: 'Annotate',
+        annotate: 'annotate'
       }
-      return [macro, args];
-    },
-    Annotate: function(name){
-      var type, cmd, annotation, macro, args;
-      type = this.GetBrackets(name, '');
-      cmd = this.GetArgument(name).match(/^\\(.+)$/)[1];
-      annotation = this.GetArgument(name);
-      macro = this.csFindMacro(cmd);
-      if (macro == null) {
-        return;
-      }
-      if (!macro.annotations) {
-        args = ['\\' + cmd].concat(macro.slice(1));
-        this.setDef(cmd, function(name){
-          var ref$, str, params, math, mml, i$;
-          ref$ = TEX.Parse('', {}).ExpandMacro.apply(this, args), str = ref$[0], params = ref$[1];
-          math = TEX.Parse(str, this.stack.env).mml();
-          mml = MML.semantics(math);
-          for (i$ in macro.annotations) {
-            (fn$.call(this, i$));
+    }, null, true);
+    return TEX.Parse.Augment({
+      ExpandMacro: function(name, macro, argcount, def){
+        var args, optional, i$, i;
+        if (argcount) {
+          args = [];
+          if (def != null) {
+            optional = this.GetBrackets(name);
+            args.push(optional != null ? optional : def);
           }
-          return this.Push(this.mmlToken(mml));
-          function fn$(type){
-            var annotation;
-            annotation = this.SubstituteArgs(params, macro.annotations[type]);
-            annotation = annotation.replace(/\\#/g, '#');
-            mml.Append(MML.annotation(annotation).With({
-              name: type
-            }));
+          for (i$ = args.length; i$ < argcount; ++i$) {
+            i = i$;
+            args.push(this.GetArgument(name));
           }
-        });
+          macro = this.SubstituteArgs(args, macro);
+        }
+        return [macro, args];
+      },
+      Annotate: function(name){
+        var type, cmd, annotation, macro, args;
+        type = this.GetBrackets(name, '');
+        cmd = this.GetArgument(name).match(/^\\(.+)$/)[1];
+        annotation = this.GetArgument(name);
         macro = this.csFindMacro(cmd);
-        macro.annotations = {};
-      }
-      return macro.annotations[type] = annotation;
-    },
-    annotate: function(name){
-      var types, expr, annotations, i$, len$, type, math, mml, annotation;
-      types = this.GetBrackets(name, '').split(',');
-      expr = this.GetArgument(name);
-      annotations = {};
-      for (i$ = 0, len$ = types.length; i$ < len$; ++i$) {
-        type = types[i$];
-        annotations[type] = this.GetArgument(name).replace(/\\#/g, '#');
-      }
-      math = TEX.Parse(expr, this.stack.env).mml();
-      mml = MML.semantics(math);
-      for (type in annotations) {
-        annotation = annotations[type];
-        mml.Append(MML.annotation(annotation).With({
-          name: type
-        }));
-      }
-      return this.Push(this.mmlToken(mml));
-    }
-  });
-});
-/* output jaxes */
-MathJax.Hub.Register.StartupHook("HTML-CSS Jax Ready", function(){
-  var MML, MML_semantics_toHTML;
-  MML = MathJax.ElementJax.mml;
-  MML_semantics_toHTML = MML.semantics.prototype.toHTML;
-  return MML.semantics.Augment({
-    toHTML: function(span, HW, D){
-      var i$, to$, i, d, attr;
-      span = MML_semantics_toHTML.call(this, span, HW, D);
-      for (i$ = 1, to$ = this.data.length; i$ < to$; ++i$) {
-        i = i$;
-        if ((d = this.data[i]) !== null && d.type === 'annotation') {
-          attr = 'data-annotation' + (d['name'] ? "_" + d['name'] : '');
-          span.setAttribute(attr, d.data[0]);
+        if (macro == null) {
+          return;
         }
-      }
-      return span;
-    }
-  });
-});
-MathJax.Hub.Register.StartupHook("SVG Jax Ready", function(){
-  var MML, SVG, MML_semantics_toSVG;
-  MML = MathJax.ElementJax.mml;
-  SVG = MathJax.OutputJax.SVG;
-  MML_semantics_toSVG = MML.semantics.prototype.toSVG;
-  return MML.semantics.Augment({
-    toSVG: function(){
-      var svg, i$, to$, i, d, attr;
-      this['class'] = 'semantics';
-      svg = MML_semantics_toSVG.call(this);
-      for (i$ = 1, to$ = this.data.length; i$ < to$; ++i$) {
-        i = i$;
-        if ((d = this.data[i]) !== null && d.type === 'annotation') {
-          attr = 'data-annotation' + (d['name'] ? "_" + d['name'] : '');
-          svg.element.setAttribute(attr, d.data[0]);
+        if (!macro.annotations) {
+          args = ['\\' + cmd].concat(macro.slice(1));
+          this.setDef(cmd, function(name){
+            var ref$, str, params, math, mml, type, annotation, $annotation;
+            ref$ = TEX.Parse('', {}).ExpandMacro.apply(this, args), str = ref$[0], params = ref$[1];
+            math = TEX.Parse(str, this.stack.env).mml();
+            mml = MML.semantics(math);
+            for (type in macro.annotations) {
+              annotation = this.SubstituteArgs(params, macro.annotations[type]);
+              annotation = annotation.replace(/\\#/g, '#');
+              $annotation = MML.annotation(annotation).With({
+                name: type,
+                isToken: true
+              });
+              mml.Append($annotation);
+            }
+            return this.Push(mml);
+          });
+          macro = this.csFindMacro(cmd);
+          macro.annotations = {};
         }
+        return macro.annotations[type] = annotation;
+      },
+      annotate: function(name){
+        var types, expr, annotations, i$, len$, type, math, mml, annotation, $annotation;
+        types = this.GetBrackets(name, '').split(',');
+        expr = this.GetArgument(name);
+        annotations = {};
+        for (i$ = 0, len$ = types.length; i$ < len$; ++i$) {
+          type = types[i$];
+          annotations[type] = this.GetArgument(name).replace(/\\#/g, '#');
+        }
+        math = TEX.Parse(expr, this.stack.env).mml();
+        mml = MML.semantics(math);
+        for (type in annotations) {
+          annotation = annotations[type];
+          $annotation = MML.annotation(annotation).With({
+            name: type,
+            isToken: true
+          });
+          mml.Append($annotation);
+        }
+        return this.Push(mml);
       }
-      SVG.addElement(svg.element, 'rect', {
-        width: svg.w,
-        height: svg.h + svg.d,
-        y: -svg.d,
-        fill: 'none',
-        stroke: 'none',
-        "pointer-events": 'all'
-      });
-      this.SVGsaveData(svg);
-      this['class'] = null;
-      return svg;
-    }
+    });
   });
-});
-MathJax.Ajax.loadComplete(MathJaxRoot + "/annotations.js");
+  /* output jaxes */
+  MathJax.Hub.Register.StartupHook("HTML-CSS Jax Ready", function(){
+    var MML, MML_semantics_toHTML;
+    MML = MathJax.ElementJax.mml;
+    MML_semantics_toHTML = MML.semantics.prototype.toHTML;
+    return MML.semantics.Augment({
+      toHTML: function(span, HW, D){
+        var i$, to$, i, d, attr;
+        span = MML_semantics_toHTML.call(this, span, HW, D);
+        for (i$ = 1, to$ = this.data.length; i$ < to$; ++i$) {
+          i = i$;
+          if ((d = this.data[i]) !== null && d.type === 'annotation') {
+            attr = 'data-annotation' + (d.name ? "_" + d.name : '');
+            span.setAttribute(attr, d.data[0]);
+          }
+        }
+        return span;
+      }
+    });
+  });
+  MathJax.Hub.Register.StartupHook("SVG Jax Ready", function(){
+    var MML, SVG, MML_semantics_toSVG;
+    MML = MathJax.ElementJax.mml;
+    SVG = MathJax.OutputJax.SVG;
+    MML_semantics_toSVG = MML.semantics.prototype.toSVG;
+    return MML.semantics.Augment({
+      toSVG: function(){
+        var svg, i$, to$, i, d, attr;
+        this['class'] = 'semantics';
+        svg = MML_semantics_toSVG.call(this);
+        for (i$ = 1, to$ = this.data.length; i$ < to$; ++i$) {
+          i = i$;
+          if ((d = this.data[i]) !== null && d.type === 'annotation') {
+            attr = 'data-annotation' + (d.name ? "_" + d.name : '');
+            svg.element.setAttribute(attr, d.data[0]);
+          }
+        }
+        SVG.addElement(svg.element, 'rect', {
+          width: svg.w,
+          height: svg.h + svg.d,
+          y: -svg.d,
+          fill: 'none',
+          stroke: 'none',
+          'pointer-events': 'all'
+        });
+        this.SVGsaveData(svg);
+        this['class'] = null;
+        return svg;
+      }
+    });
+  });
+  MathJax.Ajax.loadComplete(MathJaxRoot + "/annotations.js");
+}).call(this);
