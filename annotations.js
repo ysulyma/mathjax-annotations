@@ -23,7 +23,7 @@
 
 (() => {
 
-MathJax.Extension.annotations = {version: '2.0'};
+MathJax.Extension.annotations = {version: "2.0"};
 
 const beginGroupReady = new Promise((resolve, reject) => {
   MathJax.Hub.Register.StartupHook("TeX begingroup Ready", resolve);
@@ -47,8 +47,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
   // register the \Annotate command
   TEXDEF.Add({
     macros: {
-      Annotate: 'Annotate',
-      annotate: 'annotate',
+      Annotate: "Annotate",
+      annotate: "annotate",
       data: "data"
     }
   }, null, true);
@@ -74,7 +74,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
 
     // provide the \Annotate command
     Annotate(name) {
-      const type = this.GetBrackets(name, ''),
+      const type = this.GetBrackets(name, ""),
             cmd = this.GetArgument(name).match(/^\\(.+)$/)[1],
             annotation = this.GetArgument(name);
       
@@ -84,11 +84,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
       // modify the macro
       if (!macro.annotated) {
         // redefine the command to include the annotations
-        const args = ['\\' + cmd].concat(macro.slice(1));
+        const args = ["\\" + cmd].concat(macro.slice(1));
 
         this.setDef(cmd, function(name) {
           // get the original definition
-          const [str, params] = TEX.Parse('', {}).ExpandMacro.apply(this, args);
+          const [str, params] = TEX.Parse("", {}).ExpandMacro.apply(this, args);
 
           // stick that into a <semantics> element
           const math = TEX.Parse(str, this.stack.env).mml(),
@@ -102,7 +102,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
           // now, add the annotations...
           for (const type in annotations) {
             // expand
-            const annotation = this.SubstituteArgs(params, annotations[type]).replace(/\\#/g, '#');
+            const annotation = this.SubstituteArgs(params, annotations[type]).replace(/\\#/g, "#");
 
             mml.Append(MML.annotation(annotation).With({name: type, isToken: true}));
           }
@@ -135,12 +135,12 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
     // provide the \annotate command
     annotate(name) {
       // parse the args
-      const types = this.GetBrackets(name, '').split(','),
+      const types = this.GetBrackets(name, "").split(","),
             expr = this.GetArgument(name),
             annotations = {};
 
       for (const type of types)
-        annotations[type] = this.GetArgument(name).replace(/\\#/g, '#');
+        annotations[type] = this.GetArgument(name).replace(/\\#/g, "#");
         
       // render the math
       const math = TEX.Parse(expr, this.stack.env).mml(),
@@ -212,7 +212,7 @@ MathJax.Hub.Register.StartupHook("SVG Jax Ready", () => {
       // add the annotations
       for (let i = 1; i < this.data.length; ++i) {
         const d = this.data[i];
-        if (d !== null && d.type === 'annotation') {
+        if (d !== null && d.type === "annotation") {
           if (d.hasOwnProperty("name")) {
             this.class = "semantics";
             const attr = "data-annotation" + (d.name ? `_${d.name}` : "");
@@ -225,11 +225,11 @@ MathJax.Hub.Register.StartupHook("SVG Jax Ready", () => {
       }
 
       // rectangular click region
-      SVG.addElement(svg.element, 'rect', {
-        fill: 'none',
+      SVG.addElement(svg.element, "rect", {
+        fill: "none",
         height: svg.h + svg.d,
-        'pointer-events': 'all',
-        stroke: 'none',
+        "pointer-events": "all",
+        stroke: "none",
         width: svg.w,
         y: -svg.d
       });
