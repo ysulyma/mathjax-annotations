@@ -23,7 +23,7 @@
 
 (() => {
 
-MathJax.Extension.annotations = {version: '1.7'};
+MathJax.Extension.annotations = {version: '2.0'};
 
 const beginGroupReady = new Promise((resolve, reject) => {
   MathJax.Hub.Register.StartupHook("TeX begingroup Ready", resolve);
@@ -48,7 +48,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
   TEXDEF.Add({
     macros: {
       Annotate: 'Annotate',
-      annotate: 'annotate'
+      annotate: 'annotate',
+      data: "data"
     }
   }, null, true);
 
@@ -151,6 +152,21 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
       }
       
       this.Push(mml);
+    },
+
+    // provide the \data command
+    data(name) {
+      // parse the args
+      const dataset = this.GetArgument(name),
+            expr = this.GetArgument(name);
+      
+      // render the math
+      const math = TEX.Parse(expr, this.stack.env).mml(),
+            mml = MML.semantics(math);
+
+      mml.Append(MML.annotation().With({dataset: JSON.parse(`{${dataset}}`), isToken: true}));
+      
+      this.Push(mml);
     }
   });
 });
@@ -167,9 +183,15 @@ MathJax.Hub.Register.StartupHook("HTML-CSS Jax Ready", () => {
       // add the annotations
       for (let i = 1; i < this.data.length; ++i) {
         const d = this.data[i];
-        if (d !== null && d.type === 'annotation') {
-          const attr = 'data-annotation' + (d.name ? `_${d.name}` : '');
-          span.setAttribute(attr, d.data[0]);
+        if (d !== null && d.type === "annotation") {
+          if (d.hasOwnProperty("name")) {
+            const attr = "data-annotation" + (d.name ? `_${d.name}` : "");
+            span.setAttribute(attr, d.data[0]);
+          } else if (d.hasOwnProperty("dataset")) {
+            span.classList.add("dataset");
+            span.classList.remove("semantics");
+            Object.assign(span.dataset, d.dataset);
+          }
         }
       }
 
@@ -185,20 +207,25 @@ MathJax.Hub.Register.StartupHook("SVG Jax Ready", () => {
   
   MML.semantics.Augment({
     toSVG() {
-      this.class = 'semantics';
       const svg = MML_semantics_toSVG.call(this);
       
       // add the annotations
       for (let i = 1; i < this.data.length; ++i) {
         const d = this.data[i];
         if (d !== null && d.type === 'annotation') {
-          const attr = 'data-annotation' + (d.name ? `_${d.name}` : '');
-          svg.element.setAttribute(attr, d.data[0]);
+          if (d.hasOwnProperty("name")) {
+            this.class = "semantics";
+            const attr = "data-annotation" + (d.name ? `_${d.name}` : "");
+            svg.element.setAttribute(attr, d.data[0]);
+          } else if (d.hasOwnProperty("dataset")) {
+            this.class = "dataset";
+            Object.assign(svg.element.dataset, d.dataset);
+          }
         }
       }
 
       // rectangular click region
-      SVG.addElement('rect', {
+      SVG.addElement(svg.element, 'rect', {
         fill: 'none',
         height: svg.h + svg.d,
         'pointer-events': 'all',
