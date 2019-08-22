@@ -23,7 +23,7 @@
 
 (() => {
 
-MathJax.Extension.annotations = {version: "2.1"};
+MathJax.Extension.annotations = {version: "2.0"};
 
 const beginGroupReady = new Promise((resolve, reject) => {
   MathJax.Hub.Register.StartupHook("TeX begingroup Ready", resolve);
@@ -157,22 +157,14 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", async () => {
     // provide the \data command
     data(name) {
       // parse the args
-      const data = this.GetArgument(name),
+      const dataset = this.GetArgument(name),
             expr = this.GetArgument(name);
-
-      // format dataset keys
-      const dataset = JSON.parse(`{${data}}`);
-      const keys = Object.keys(dataset);
-      for (const key of keys) {
-        dataset[dashToCamel(key)] = dataset[key];
-        delete dataset[key];
-      }
-
+      
       // render the math
       const math = TEX.Parse(expr, this.stack.env).mml(),
             mml = MML.semantics(math);
 
-      mml.Append(MML.annotation().With({dataset, isToken: true}));
+      mml.Append(MML.annotation().With({dataset: JSON.parse(`{${dataset}}`), isToken: true}));
       
       this.Push(mml);
     }
@@ -261,12 +253,6 @@ function csFindAnnotations(name, eqnStack, rootStack) {
     if (def) return def;
   }
   return {};
-}
-
-function dashToCamel(str) {
-  return str.split("-")
-  .map((s, i) => i === 0 ? s : s[0].toUpperCase() + s.slice(1))
-  .join("");
 }
 
 MathJax.Ajax.loadComplete("[Extra]/annotations.js");
