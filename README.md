@@ -23,7 +23,7 @@ MathJax.Ajax.loadComplete("[Extra]/config.js");
 })();
 ````
 
-## Example usage:
+## Usage
 The following code:
 ````HTML
 <div style="display:none">\[
